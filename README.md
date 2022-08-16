@@ -1,1 +1,2 @@
-simple snake game with some bugs
+simple snake game 
+
