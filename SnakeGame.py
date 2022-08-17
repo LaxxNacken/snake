@@ -10,11 +10,11 @@ class Direction(Enum):
     RIGHT = 3
     LEFT = 4
 
-
 window_width = 500
 window_height = 500
 
 pygame.init()
+pygame.joystick.init()
 pygame.display.set_caption("Snake Game")
 window = pygame.display.set_mode((window_width, window_height))
 
@@ -36,18 +36,6 @@ global score
 score = 0
 
 
-def handle_keys(direction):
-    new_direction = direction
-    for event in [e for e in pygame.event.get() if e.type == pygame.KEYDOWN]:
-        if event.key == pygame.K_w and direction != Direction.DOWN:
-            new_direction = Direction.UP
-        if event.key == pygame.K_s and direction != Direction.UP:
-            new_direction = Direction.DOWN
-        if event.key == pygame.K_d and direction != Direction.LEFT:
-            new_direction = Direction.RIGHT
-        if event.key == pygame.K_a and direction != Direction.RIGHT:
-            new_direction = Direction.LEFT
-    return new_direction
 
 
 def move_snake(direction):
@@ -65,9 +53,6 @@ def move_snake(direction):
 def generate_new_food():
     food_position[0] = random.randint(5, ((window_width - 2) // scale)) * scale
     food_position[1] = random.randint(5, ((window_height - 2) // scale)) * scale
-    while food_position == snake_position:
-        food_position[0] = random.randint(5, ((window_width - 2) // scale)) * scale
-        food_position[1] = random.randint(5, ((window_height - 2) // scale)) * scale
 
 
 def get_food():
@@ -75,7 +60,6 @@ def get_food():
     global speed
     if abs(snake_position[0] - food_position[0]) < scale and abs(snake_position[1] - food_position[1]) < scale:
         score += 1
-        speed += 0.2
         generate_new_food()
     else:
         snake_body.pop()
@@ -84,7 +68,7 @@ def get_food():
 def repaint():
     window.fill(pygame.Color(0, 0, 0))
     for body in snake_body:
-        pygame.draw.circle(window, pygame.Color(0, 255, 0), (body[0], body[1]), scale / 2)
+        pygame.draw.circle(window, pygame.Color(0, 255, 0), (body[0], body[1]), int(scale / 2))
     pygame.draw.rect(window, pygame.Color(255, 0, 0),
                      pygame.Rect(food_position[0] - scale / 2, food_position[1] - scale / 2, scale, scale))
 
@@ -121,8 +105,29 @@ def paint_hud():
 
 def game_loop():
     direction = Direction.RIGHT
-    while True:
-        direction = handle_keys(direction)
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        joystick_count = pygame.joystick.get_count()
+        for i in range(joystick_count):
+            joystick = pygame.joystick.Joystick(i)
+            joystick.init()
+            axes = joystick.get_numaxes()
+            for i in range(axes):
+                axis = joystick.get_axis(i)
+                if i == 0:
+                    if axis > 0.0 and direction != Direction.LEFT:
+                        direction = Direction.RIGHT
+                    if axis < 0.0 and direction != Direction.RIGHT:
+                        direction = Direction.LEFT
+                if i == 1:
+                    if axis > 0.0 and direction != Direction.UP:
+                        direction = Direction.DOWN
+                    if axis < 0.0 and direction != Direction.DOWN:
+                        direction = Direction.UP
+        
         move_snake(direction)
         get_food()
         repaint()
