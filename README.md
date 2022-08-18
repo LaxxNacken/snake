@@ -1,2 +1,2 @@
-simple snake game 
+simple snake game made in pygame ඞ
 
